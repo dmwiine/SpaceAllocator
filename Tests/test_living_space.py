@@ -15,9 +15,9 @@ class TestLivingSpace(unittest.TestCase):
 
     def test_living_space_properties(self):
         x = LivingSpace('X')
-        self.assertListEqual(['X', 4, []],
-                             [x.name, x.space_available, x.occupants],
-                             msg='The name, space_available and occupants should be properties of the LivingSpace')
+        self.assertListEqual(['X', 4],
+                             [x.name, x.space_available],
+                             msg='The name, space_available should be X and 4')
 
     def test_has_space_if_living_space_has_no_space(self):
         x = LivingSpace('X')
