@@ -5,3 +5,4 @@ class Fellow(Person):
         Person.__init__(self, name, None)
         self.living_space = None
         self.wants_accomodation = False
+        
