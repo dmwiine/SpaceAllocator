@@ -21,22 +21,41 @@ class Dojo():
         self.available_living_spaces = []
         self.allocations = {}
 
+    def room_exists(self, room_name):
+        all_rooms = self.all_offices + self.all_living_spaces
+        is_created = [room for room in all_rooms if room.name == room_name]
+        if len(is_created) > 0:
+            return True
+        else:
+            return False
+
+    def person_exists(self, person_name):
+        all_people = self.all_fellows + self.all_staff
+        is_created = [person for person in all_people if person.name == person_name]
+        if len(is_created) > 0:
+            return True
+        else:
+            return False
+
     def create_room(self, room_type, name_list):
         """ This function creates new rooms which are either offices or living spaces"""
 
         if room_type != "" and name_list != []:
             for name in name_list:
-                if type(name) == str:
-                    if room_type == "office":
-                        office = Office(name)
-                        self.all_offices.append(office)
-                        self.available_offices.append(office)
-                    elif room_type == "living_space":
-                        living_space = LivingSpace(name)
-                        self.all_living_spaces.append(living_space)
-                        self.available_living_spaces.append(living_space)
+                if isinstance(name, str) and name.isalpha():
+                    if not self.room_exists(name.upper()):
+                        if room_type == "office":
+                            office = Office(name.upper())
+                            self.all_offices.append(office)
+                            self.available_offices.append(office)
+                        elif room_type == "living_space":
+                            living_space = LivingSpace(name.upper())
+                            self.all_living_spaces.append(living_space)
+                            self.available_living_spaces.append(living_space)
+                        else:
+                            raise ValueError("Room type should be either office or Living_space")
                     else:
-                        raise TypeError
+                        raise ValueError("Room has already been created")
                 else:
                     raise TypeError
         else:
@@ -44,23 +63,26 @@ class Dojo():
 
     def add_fellow(self, name, wants_accomodation):
         """Function to add a fellow and allocate him/her a room"""
-        fellow = Fellow(name)
-        available_office = self.get_available_office()
-        if available_office:
-            if fellow.office is None:
-                fellow = self.add_person_to_office(fellow, available_office)
-                    #fellow = available_office.add_person(fellow)
-        if wants_accomodation == 'Y':
-            fellow.wants_accomodation = True
-            living_space = self.get_available_living_space()
-            if living_space:
-                if fellow.living_space is None:
-                    fellow = self.add_fellow_to_living_space(fellow, living_space)
-                        #fellow = living_space.add_person(fellow,)
-        self.all_fellows.append(fellow)
-        self.update_available_offices()
-        self.update_available_living_spaces()
-        return fellow
+        if len(self.all_offices) == 0 and len(self.all_living_spaces) == 0:
+            raise ValueError("Rooms must be created before a person is added")
+        if not self.person_exists(name):
+            fellow = Fellow(name)
+            available_office = self.get_available_office()
+            if available_office:
+                if fellow.office is None:
+                    fellow = self.add_person_to_office(fellow, available_office)
+            if wants_accomodation == 'Y':
+                fellow.wants_accomodation = True
+                living_space = self.get_available_living_space()
+                if living_space:
+                    if fellow.living_space is None:
+                        fellow = self.add_fellow_to_living_space(fellow, living_space)
+            self.all_fellows.append(fellow)
+            self.update_available_offices()
+            self.update_available_living_spaces()
+            return fellow
+        else:
+            raise ValueError("Person already exists in the system")
 
     def add_staff(self, name):
         """Function to add a staff and allocate him/her a room"""
@@ -77,14 +99,12 @@ class Dojo():
         """Function to add a person to a an office"""
         if office.space_available > 0:
             person.office = office
-            print("------Person added-------")
             office.space_available -= 1
             if office.name not in self.allocations.keys():
                 self.allocations[office.name] = [person]
             else:
                 if person not in self.allocations[office.name]:
                     self.allocations[office.name].append(person)
-            #self.occupants.append(person)
         return person
 
     def add_fellow_to_living_space(self, fellow, living_space):
@@ -94,11 +114,9 @@ class Dojo():
             living_space.space_available -= 1
             if living_space.name not in self.allocations.keys():
                 self.allocations[living_space.name] = [fellow]
-                print("Assigment success")
             else:
                 if fellow not in self.allocations[living_space.name]:
                     self.allocations[living_space.name].append(fellow)
-                    print("Assignement 2")
             return fellow
 
     def get_available_living_space(self):
@@ -137,12 +155,10 @@ class Dojo():
 
     def print_room(self, name):
         """This function prints the occupants in a room"""
-
-        #all_rooms = self.all_offices + self.all_living_spaces
+        if not self.room_exists(name):
+            return ValueError("Roomname does not exist in the system")
         print("**** Room " + name + " occupants ****")
         print()
-        #for room in all_rooms:
-            #if room.name == name:
         if self.allocations[name]:
             for person in self.allocations[name]:
                 print(person.name)
@@ -159,6 +175,9 @@ class Dojo():
 
     def print_allocations_to_a_file(self, filename):
         """Prints room allocations to a text file"""
+        if not isinstance(filename, str):
+            return ValueError("Please enter a valid filename")
+
         file = open('./Files/' + filename, 'w')
         for key, value in self.allocations.items():
             file.write('\n' + key + '\n')
@@ -184,7 +203,8 @@ class Dojo():
 
     def print_unallocated_to_file(self, filename):
         """Prints all the people who haven't been allocated rooms to a text file"""
-
+        if not isinstance(filename, str):
+            return ValueError("Please enter a valid filename")
         file = file = open('./Files/' + filename, 'w')
         file.write('\n'"**** UnAllocated Fellows ****"'\n')
         for fellow in self.all_fellows:
@@ -204,6 +224,8 @@ class Dojo():
         for person in all_people:
             if person.name == person_name:
                 return person
+            #else:
+                #return False
 
     def find_room(self, room_name):
         """Function to find a room object given room name"""
@@ -212,24 +234,31 @@ class Dojo():
         for room in all_rooms:
             if room.name == room_name:
                 return room
+            #else:
+                #return False
 
     def reallocate_person(self, person_name, room_name):
         """Function to reallocate a person to a new room"""
 
         person = self.find_person(person_name)
         room = self.find_room(room_name)
+        #if person is False:
+            #return "Person could not be found."
+        #if room is False:
+            #return "Room could not be found."
 
         if isinstance(room, LivingSpace) and room in self.available_living_spaces:
             old_living_space = person.living_space
             print("ols space: {0} name: {1}".format(old_living_space.name, person.name))
             self.remove_person_from_room(old_living_space.name, person)
             self.add_fellow_to_living_space(person, room)
-        elif room is Office and room in self.available_offices:
+        elif isinstance(room, Office) and room in self.available_offices:
             old_office = person.office
+            print("old office: {0} name: {1}".format(old_office.name, person.name))
             self.remove_person_from_room(old_office, person)
             self.add_person_to_office(person, room)
         else:
-            return "Room selected has no available space"
+            raise ValueError("Room selected has no available space")
 
     def remove_person_from_room(self, room_name, person):
         """ This function removes a person from their current room before
@@ -239,6 +268,17 @@ class Dojo():
         old_room = self.find_room(room_name)
         print("Old space %s" % old_room.space_available)
         old_room.space_available += 1
+
+    def print_all_available_rooms(self):
+        """Prints all the rooms that have available space"""
+
+        print("**** Available Offices ****")
+        for office in self.available_offices:
+            print(office.name + " has " + str(office.space_available) + " available space(s).")
+        print()
+        print("**** Available Living Spaces ****")
+        for living_space in self.available_living_spaces:
+            print(living_space.name + " has " + str(living_space.space_available) + " available space(s).")
 
     def load_people(self, file_name):
         """Function to load people from a text file"""
@@ -264,6 +304,13 @@ class Dojo():
         # create a Session
         Session = sessionmaker(bind=engine)
         session = Session()
+
+        session.query(OfficeModel).delete()
+        session.query(LivingSpaceModel).delete()
+        session.query(FellowModel).delete()
+        session.query(StaffModel).delete()
+
+        session.commit()
 
         # Create objects
         for living_space in self.all_living_spaces:
@@ -320,15 +367,17 @@ class Dojo():
 
         # Create objects
         for living_space in session.query(LivingSpaceModel).order_by(
-            LivingSpaceModel.living_space_id):
+                LivingSpaceModel.living_space_id):
             new_space = LivingSpace(living_space.name)
             new_space.space_available = living_space.spaces_available
             self.all_living_spaces.append(new_space)
+            self.available_living_spaces.append(new_space)
 
         for office in session.query(OfficeModel).order_by(OfficeModel.office_id):
             new_office = Office(office.name)
             new_office.space_available = office.spaces_available
             self.all_offices.append(new_office)
+            self.available_offices.append(new_office)
 
         for fellow in session.query(FellowModel).order_by(FellowModel.fellow_id):
             new_fellow = Fellow(fellow.name)
@@ -340,7 +389,7 @@ class Dojo():
                 if fellow_space.name not in self.allocations.keys():
                     self.allocations[fellow_space.name] = [new_fellow]
                 else:
-                    if fellow not in self.allocations[fellow_space.name]:
+                    if new_fellow not in self.allocations[fellow_space.name]:
                         self.allocations[fellow_space.name].append(new_fellow)
 
             if fellow.office:
@@ -366,7 +415,7 @@ class Dojo():
                 if office.name not in self.allocations.keys():
                     self.allocations[office.name] = [new_staff]
                 else:
-                    if new_fellow not in self.allocations[office.name]:
+                    if new_staff not in self.allocations[office.name]:
                         self.allocations[office.name].append(new_staff)
             self.all_staff.append(new_staff)
 
