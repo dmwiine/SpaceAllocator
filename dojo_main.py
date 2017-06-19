@@ -1,11 +1,12 @@
 """
 Usage:
     dojo_main.py create_room <room_type> <room_name>...
-    dojo_main.py add_person <first_name> <last_name> (FELLOW|STAFF) [<wants_accomodation>]
+    dojo_main.py add_person <first_name> <last_name> <person_type> [<wants_accomodation>]
     dojo_main.py print_room <room_name>
     dojo_main.py print_allocations [--o=<filename>]
     dojo_main.py print_unallocated [--o=<filename>]
     dojo_main.py reallocate_person <first_name> <last_name> <new_room_name>
+    dojo_main.py print_available_rooms
     dojo_main.py load_people
     dojo_main.py save_state [--db=sqlite_database]
     dojo_main.py save_state [sqlite_database]
@@ -16,7 +17,7 @@ Options:
     -i, --interactive  Interactive Mode
     -h, --help  Show this screen and exit.
     --o=<filename>  Filename to save output
-    --db=sqlite_database     
+    --db=sqlite_database
 """
 
 import sys
@@ -56,10 +57,10 @@ def docopt_cmd(func):
     fn.__dict__.update(func.__dict__)
     return fn
 # End of citation
-"""
-The main dojo room allocator launch class.
-"""
+
 class TheDojo(cmd.Cmd):
+    """ The main dojo room allocator launch class. """
+
     intro = '******************* Welcome to the Dojo Room Allocator' \
         + ' (type help for a list of commands ********************.)'
     prompt = '(dojo_main) '
@@ -71,55 +72,73 @@ class TheDojo(cmd.Cmd):
 
         room_type = arg["<room_type>"]
         room_names = arg["<room_name>"]
-        dojo.create_room(room_type.lower(), room_names)
-        length = len(room_names)
-        if length > 0:
-            print("********************** Rooms successfully created ************************")
-        else:
-            print("********************** Room successfully created ************************")
+        try:
+            dojo.create_room(room_type.lower(), room_names)
+            length = len(room_names)
+            if length > 0:
+                print("********************** Rooms successfully created ************************")
+            else:
+                print("********************** Room successfully created ************************")
+        except (ValueError, TypeError):
+            print("Oops! Invalid room name/room type OR the room has already been created")
 
     @docopt_cmd
     def do_add_person(self, arg):
-        """Usage: add_person <first_name> <last_name> (FELLOW|STAFF) [<wants_accomodation>]"""
+        """Usage: add_person <first_name> <last_name> <person_type> [<wants_accomodation>]"""
         first_name = arg["<first_name>"].upper()
         last_name = arg["<last_name>"].upper()
         person_name = first_name + " " + last_name
-        fellow = arg["FELLOW"]
-        staff = arg["STAFF"]
+        person_type = arg["<person_type>"].upper()
         wants_accomodation = arg["<wants_accomodation>"]
 
-        if fellow is None:
-            dojo.add_fellow(person_name, wants_accomodation.upper())
+        try:
+            if wants_accomodation is None:
+                wants_accomodation = "N"
 
-        if staff is None:
-            dojo.add_staff(person_name)
-        print(person_name + " successfully created.")
+            if person_type == "FELLOW":
+                dojo.add_fellow(person_name, wants_accomodation.upper())
+            elif person_type == "STAFF":
+                dojo.add_staff(person_name)
+            else:
+                print("Please enter a valid person type.(FELLOW|STAFF)")
+            print(person_name + " successfully created.")
+        except ValueError:
+            print("Oops! The person already exists OR No rooms have been created yet")
 
     @docopt_cmd
     def do_print_room(self, arg):
         """Usage: print_room <room_name>"""
-        room_name = arg["<room_name>"]
-        dojo.print_room(room_name)
+        try:
+            room_name = arg["<room_name>"].upper()
+            dojo.print_room(room_name)
+        except ValueError:
+            print("Ooops! The room name does not exist in the system")
 
     @docopt_cmd
     def do_print_allocations(self, arg):
         """Usage: print_allocations [--o=filename.txt]"""
-        print_to_text = arg['--o']
-        if print_to_text:
-            dojo.print_allocations_to_a_file(print_to_text)
-            print("Done saving allocations to file.")
-        else:
-            dojo.print_allocations()
+        try:
+            print_to_text = arg['--o']
+            if print_to_text:
+                dojo.print_allocations_to_a_file(print_to_text)
+                print("Done saving allocations to file.")
+            else:
+                dojo.print_allocations()
+        except ValueError:
+            print("Please enter a valid file name")
 
     @docopt_cmd
     def do_print_unallocated(self, arg):
         """Usage: print_unallocated [--o=filename.txt]"""
-        print_to_text = arg['--o']
-        if print_to_text:
-            dojo.print_unallocated_to_file(print_to_text)
-            print("Done saving the unallocated to file.")
-        else:
-            dojo.print_unallocated()
+        try:
+            print_to_text = arg['--o']
+            if print_to_text:
+                dojo.print_unallocated_to_file(print_to_text)
+                print("Done saving the unallocated to file.")
+            else:
+                dojo.print_unallocated()
+        except ValueError:
+            print("Please enter a valid file name")
 
     @docopt_cmd
     def do_reallocate_person(self, arg):
@@ -127,28 +146,50 @@ class TheDojo(cmd.Cmd):
         first_name = arg['<first_name>'].upper()
         last_name = arg['<last_name>'].upper()
         person_name = first_name + " " + last_name
-        new_room_name = arg['<new_room_name>']
-        dojo.reallocate_person(person_name, new_room_name)
+        new_room_name = arg['<new_room_name>'].upper().strip()
+        try:
+            dojo.reallocate_person(person_name, new_room_name)
+        except ValueError:
+            print("Oops! The room has no available space or It doesn't exist. ")
 
     @docopt_cmd
     def do_load_people(self, arg):
         """Usage: load_people"""
-        dojo.load_people('inputs.txt')
-        print("************* People successfully loaded from file **************")
+        try:
+            dojo.load_people('inputs.txt')
+            print("************* People successfully loaded from file **************")
+        except ValueError:
+            print("Oops! The person already exists OR No rooms have been created yet")
+
+    @docopt_cmd
+    def do_print_available_rooms(self, arg):
+        """Usage: print_available_rooms"""
+        try:
+            dojo.print_all_available_rooms()
+        except Exception:
+            print("Oops! Something went wrong")
+
 
     @docopt_cmd
     def do_save_state(self, arg):
         """Usage: save_state [--db=sqlite_database]"""
-        print("Saving data. Please wait.........................")
-        dojo.save_state()
-        print("************ Data successfully saved in the database *************")
+        try:
+            print("Saving data. Please wait.........................")
+            dojo.save_state()
+            print("************ Data successfully saved in the database *************")
+        except Exception:
+            print("Ooops! Sorry saving of data into the database has failed")
 
     @docopt_cmd
     def do_load_state(self, arg):
         """Usage: save_state [--db=sqlite_database]"""
-        print("Loading the data. Please wait.........................")
-        dojo.load_state()
-        print("************** Data successfully loaded into the Dojo ***************")
+        try:
+            print("Loading the data. Please wait.........................")
+            dojo.load_state()
+            print("************** Data successfully loaded into the Dojo ***************")
+        except Exception:
+            print("Ooops! Sorry loading of data from the database has failed")
+
     def do_quit(self, arg):
         """Quits out of Interactive Mode."""
 
