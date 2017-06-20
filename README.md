@@ -103,17 +103,17 @@ This loads data from a previously saved session.
 Enables you to run tests on the different parts of the application to ensure that they are running as intended.
  
 ### Running tests
-Open the terminal cd into the project folder and type in the command below to run tests on the program. Please remember to use the correct python installation on your system.
-`python3 -m unittest Tests/<test_file_name>`
+Open the terminal, cd into the project folder and type in the command below to run tests on the program. Please remember to use the correct python installation on your system.
+```python3 -m unittest Tests/<test_file_name>```
  
 ### Gather test coverage data
 Determine the percentage of code tested.
-`coverage run -m unittest discover -s Tests`
+```coverage run -m unittest discover -s Tests```
  
 ### Print / Output test coverage report
 #### Command-line report
 Use the commands below to print out a simple command-line report. Be sure to cd into the project folder first.
-`coverage report -m`
+```coverage report -m```
  
  
 
