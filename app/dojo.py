@@ -263,19 +263,13 @@ class Dojo():
 
         person = self.find_person(person_name)
         room = self.find_room(room_name)
-        #if person is False:
-            #return "Person could not be found."
-        #if room is False:
-            #return "Room could not be found."
-
+        
         if isinstance(room, LivingSpace) and room in self.available_living_spaces:
             old_living_space = person.living_space
-            #print("ols space: {0} name: {1}".format(old_living_space.name, person.name))
             self.remove_person_from_room(old_living_space.name, person)
             self.add_fellow_to_living_space(person, room)
         elif isinstance(room, Office) and room in self.available_offices:
             old_office = person.office
-            #print("old office: {0} name: {1}".format(old_office.name, person.name))
             self.remove_person_from_room(old_office.name, person)
             self.add_person_to_office(person, room)
         else:
