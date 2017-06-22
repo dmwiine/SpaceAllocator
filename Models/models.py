@@ -4,7 +4,7 @@ from sqlalchemy import Column, Date, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, backref
 
-engine = create_engine('sqlite:///dojo.db', echo=True)
+engine = create_engine('sqlite:///dojo.db')
 Base = declarative_base()
 
 
@@ -16,10 +16,6 @@ class FellowModel(Base):
     living_space_id = Column('living_space_id', Integer, ForeignKey("living_space.living_space_id"), nullable=True)
     office_id = Column('office_id', Integer, ForeignKey("office.office_id"), nullable=True)
     name = Column(String)
-
-    # fellow_living_space = relationship("LivingSpaceModel", foreign_keys=[living_space_id])
-    # fellow_office = relationship("OfficeModel", foreign_keys=[office_id])
-    # ----------------------------------------------------------------------
 
     def __init__(self, living_space_id, office_id, name):
         """"""
@@ -36,7 +32,7 @@ class LivingSpaceModel(Base):
     spaces_available = Column(Integer)
 
     fellows = relationship("FellowModel", backref="living_space")
-    # ----------------------------------------------------------------------
+    
     def __init__(self, name, spaces_available):
         """"""
         self.name = name
@@ -53,7 +49,6 @@ class OfficeModel(Base):
     fellows = relationship("FellowModel", backref="office")
     staff = relationship("StaffModel", backref="office")
 
-    # ----------------------------------------------------------------------
     def __init__(self, name, spaces_available):
         """"""
         self.name = name
@@ -70,8 +65,6 @@ class StaffModel(Base):
     office_id = Column('office_id', Integer, ForeignKey("office.office_id"), nullable=True)
     name = Column(String)
 
-    # staff_office = relationship("OfficeModel", foreign_keys=[office_id])
-    # ----------------------------------------------------------------------
     def __init__(self, office_id, name):
         """"""
         self.office_id = office_id
