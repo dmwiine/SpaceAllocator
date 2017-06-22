@@ -1,4 +1,5 @@
-# Dojo Room Allocator
+[![Build Status](https://travis-ci.org/dmwiine/SpaceAllocator.svg?branch=Review)](https://travis-ci.org/dmwiine/SpaceAllocator)  [![Coverage Status](https://coveralls.io/repos/github/dmwiine/SpaceAllocator/badge.svg?branch=Review)](https://coveralls.io/github/dmwiine/SpaceAllocator?branch=Review)
+# Dojo Room Allocator    
 
 This is the implementation of a system that randomly allocates rooms to Andela fellows and staff at the Dojo.
  
