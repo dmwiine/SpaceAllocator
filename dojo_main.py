@@ -9,7 +9,7 @@ Usage:
     dojo_main.py print_available_rooms
     dojo_main.py load_people
     dojo_main.py save_state [--db=sqlite_database]
-    dojo_main.py save_state [sqlite_database]
+    dojo_main.py load_state <sqlite_database>
     dojo_main.py (-i | --interactive)
     dojo_main.py (-h | --help)
 
@@ -22,12 +22,16 @@ Options:
 
 import sys
 import cmd
+import os
 from docopt import docopt, DocoptExit
 from colorama import init
 from colorama import Fore, Style
 from app.dojo import Dojo
-init()
+from Models.dojo_DB import DojoDB
+
 dojo = Dojo()
+dojo_db = DojoDB()
+path = os.path.dirname(os.path.abspath(__file__)) + '/'
 #Citation: Source => https://github.com/docopt/docopt/blob/master/examples/interactive_example.py
 def docopt_cmd(func):
     """
@@ -220,6 +224,23 @@ class TheDojo(cmd.Cmd):
     def do_save_state(self, arg):
         """Usage: save_state [--db=sqlite_database]"""
         try:
+            database_name = arg['--db']
+            if database_name is None:
+                database_name = 'dojo_db'
+
+            if database_name == 'dojo_db':
+                if os.path.exists(path + database_name + '.db'):
+                    database = dojo_db.read_db(database_name)
+                else:
+                    database = dojo_db.create_db(database_name)
+            else:
+                if os.path.exists(path + database_name + '.db'):
+                    database = dojo_db.read_db(database_name)
+                else:
+                    database = dojo_db.create_db(database_name)
+
+            dojo.session = database.session
+
             print()
             print(Fore.BLUE + "Saving data. Please wait.........................")
             print()
@@ -234,15 +255,24 @@ class TheDojo(cmd.Cmd):
 
     @docopt_cmd
     def do_load_state(self, arg):
-        """Usage: save_state [--db=sqlite_database]"""
+        """Usage: load_state <sqlite_database>"""
         try:
-            print()
-            print(Fore.BLUE + "Loading the data. Please wait.........................")
-            dojo.load_state()
-            print()
-            print(Fore.GREEN + "************** Data successfully loaded into the Dojo ***************")
-            print(Style.RESET_ALL)
-            print()
+            database_name = arg['<sqlite_database>']
+            print(path + database_name + '.db')
+            if os.path.exists(path + database_name + '.db'):
+                database = dojo_db.read_db('dojo_db')
+                dojo.session = database.session
+                dojo.reset()
+                print()
+                print(Fore.BLUE + "Loading the data. Please wait.........................")
+                dojo.load_state()
+                print()
+                print(Fore.GREEN + "********* Data successfully loaded into the Dojo **********")
+                print(Style.RESET_ALL)
+                print()
+            else:
+                print(Fore.RED + '{}.db does not exit.'.format(database_name))
+                print(Style.RESET_ALL)
         except Exception:
             print()
             print(Fore.RED + "Ooops! Sorry loading of data from the database has failed")
@@ -253,6 +283,7 @@ class TheDojo(cmd.Cmd):
         """Quits out of Interactive Mode."""
         print()
         print(Fore.CYAN + '********************** Good Bye! **********************')
+        print(Style.RESET_ALL)
         print()
         exit()
 
@@ -260,6 +291,7 @@ opt = docopt(__doc__, sys.argv[1:])
 
 if opt['--interactive'] or opt['-i']:
     TheDojo().cmdloop()
+
 
 
 
