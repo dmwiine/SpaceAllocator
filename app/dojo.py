@@ -5,7 +5,7 @@ from app.office import Office
 from app.living_space import LivingSpace
 from app.staff import Staff
 from app.fellow import Fellow
-from Models.models import engine
+#from Models.models import engine
 from sqlalchemy.orm import sessionmaker
 
 from Models.models import OfficeModel, FellowModel, StaffModel, LivingSpaceModel
@@ -21,6 +21,7 @@ class Dojo():
         self.available_offices = []
         self.available_living_spaces = []
         self.allocations = {}
+        self.session = None
 
     def room_exists(self, room_name):
         all_rooms = self.all_offices + self.all_living_spaces
@@ -245,8 +246,6 @@ class Dojo():
         for person in all_people:
             if person.name == person_name:
                 return person
-            #else:
-                #return False
 
     def find_room(self, room_name):
         """Function to find a room object given room name"""
@@ -255,15 +254,13 @@ class Dojo():
         for room in all_rooms:
             if room.name == room_name:
                 return room
-            #else:
-                #return False
 
     def reallocate_person(self, person_name, room_name):
         """Function to reallocate a person to a new room"""
 
         person = self.find_person(person_name)
         room = self.find_room(room_name)
-        
+
         if isinstance(room, LivingSpace) and room in self.available_living_spaces:
             old_living_space = person.living_space
             self.remove_person_from_room(old_living_space.name, person)
@@ -282,6 +279,8 @@ class Dojo():
         self.allocations[room_name].remove(person)
         old_room = self.find_room(room_name)
         old_room.space_available += 1
+        self.update_available_offices()
+        self.update_available_living_spaces()
 
     def print_all_available_rooms(self):
         """Prints all the rooms that have available space"""
@@ -315,83 +314,76 @@ class Dojo():
     def save_state(self):
         """Function to save session data into the database"""
 
-        # create a Session
-        Session = sessionmaker(bind=engine)
-        session = Session()
+        self.session.query(OfficeModel).delete()
+        self.session.query(LivingSpaceModel).delete()
+        self.session.query(FellowModel).delete()
+        self.session.query(StaffModel).delete()
 
-        session.query(OfficeModel).delete()
-        session.query(LivingSpaceModel).delete()
-        session.query(FellowModel).delete()
-        session.query(StaffModel).delete()
-
-        session.commit()
+        self.session.commit()
 
         # Create objects
         for living_space in self.all_living_spaces:
             living_space_model = LivingSpaceModel(living_space.name, living_space.space_available)
-            session.add(living_space_model)
+            self.session.add(living_space_model)
 
         for office in self.all_offices:
             office_model = OfficeModel(office.name, office.space_available)
-            session.add(office_model)
-        session.commit()
+            self.session.add(office_model)
+        self.session.commit()
 
         for fellow in self.all_fellows:
-            with session.no_autoflush:
+            with self.session.no_autoflush:
                 living_space = None
                 office = None
                 office_query = None
                 space_query = None
                 if fellow.living_space:
-                    space_query = session.query(LivingSpaceModel).filter_by(
+                    space_query = self.session.query(LivingSpaceModel).filter_by(
                         name=fellow.living_space.name).first()
                 if fellow.office:
-                    office_query = session.query(OfficeModel).filter_by(
+                    office_query = self.session.query(OfficeModel).filter_by(
                         name=fellow.office.name).first()
                 if space_query:
                     living_space = space_query.living_space_id
                 if office_query:
                     office = office_query.office_id
                 fellow_model = FellowModel(living_space, office, fellow.name)
-                session.add(fellow_model)
+                self.session.add(fellow_model)
 
         for staff in self.all_staff:
-            with session.no_autoflush:
+            with self.session.no_autoflush:
                 office = None
                 office_query = None
                 if staff.office:
-                    office_query = session.query(OfficeModel).filter_by(
+                    office_query = self.session.query(OfficeModel).filter_by(
                         name=staff.office.name).first()
                 if office_query:
                     office = office_query.office_id
 
                 staff_model = StaffModel(office, staff.name)
-                session.add(staff_model)
+                self.session.add(staff_model)
 
         # commit the record the database
-        session.commit()
+        self.session.commit()
 
     def load_state(self):
         """Function to load data from the database"""
 
-        Session = sessionmaker(bind=engine)
-        session = Session()
-
         # Create objects
-        for living_space in session.query(LivingSpaceModel).order_by(
+        for living_space in self.session.query(LivingSpaceModel).order_by(
                 LivingSpaceModel.living_space_id):
             new_space = LivingSpace(living_space.name)
             new_space.space_available = living_space.spaces_available
             self.all_living_spaces.append(new_space)
             self.available_living_spaces.append(new_space)
 
-        for office in session.query(OfficeModel).order_by(OfficeModel.office_id):
+        for office in self.session.query(OfficeModel).order_by(OfficeModel.office_id):
             new_office = Office(office.name)
             new_office.space_available = office.spaces_available
             self.all_offices.append(new_office)
             self.available_offices.append(new_office)
 
-        for fellow in session.query(FellowModel).order_by(FellowModel.fellow_id):
+        for fellow in self.session.query(FellowModel).order_by(FellowModel.fellow_id):
             new_fellow = Fellow(fellow.name)
             if fellow.living_space:
                 fellow_space = LivingSpace(fellow.living_space.name)
@@ -417,7 +409,7 @@ class Dojo():
 
             self.all_fellows.append(new_fellow)
 
-        for staff in session.query(StaffModel).order_by(StaffModel.staff_id):
+        for staff in self.session.query(StaffModel).order_by(StaffModel.staff_id):
             new_staff = Staff(staff.name)
             if staff.office:
                 office = Office(staff.office.name)
@@ -431,6 +423,19 @@ class Dojo():
                         self.allocations[office.name].append(new_staff)
             self.all_staff.append(new_staff)
     
+    def reset(self):
+        print()
+        print("Resetting system, please wait....")
+        self.all_offices = []
+        self.all_living_spaces = []
+        self.all_staff = []
+        self.all_fellows = []
+        self.available_offices = []
+        self.available_living_spaces = []
+        self.allocations = {}
+        print("Reset completed....")
+        print()
+
     @staticmethod
     def has_invalid_chars(my_string):
         # Populate a list of invalid special characters
