@@ -4,7 +4,7 @@ from sqlalchemy import Column, Date, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, backref
 
-engine = create_engine('sqlite:///dojo.db')
+#engine = create_engine('sqlite:///dojo.db')
 Base = declarative_base()
 
 
@@ -32,7 +32,7 @@ class LivingSpaceModel(Base):
     spaces_available = Column(Integer)
 
     fellows = relationship("FellowModel", backref="living_space")
-    
+
     def __init__(self, name, spaces_available):
         """"""
         self.name = name
@@ -71,4 +71,4 @@ class StaffModel(Base):
         self.name = name
 
 
-Base.metadata.create_all(engine)
+#Base.metadata.create_all(engine)
