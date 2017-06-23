@@ -1,6 +1,7 @@
 import unittest
 import sqlite3
 from app.dojo import Dojo
+from Models.dojo_DB import DojoDB
 from app.fellow import Fellow
 from app.staff import Staff
 from app.office import Office
@@ -9,6 +10,7 @@ from app.living_space import LivingSpace
 class TestDojo(unittest.TestCase):
     def setUp(self):
         self.dojo = Dojo()
+        self.dojo_db = DojoDB()
 
     def test_creates_office_successfully(self):
 
@@ -161,18 +163,23 @@ class TestDojo(unittest.TestCase):
         self.dojo.create_room("office", ["Blue", "Green", "Pink"])
         self.dojo.create_room("living_space", ["A", "B", "C"])
         self.dojo.load_people("inputs.txt")
-
+        database = self.dojo_db.create_db('Test')
+        self.dojo.session = database.session
         self.dojo.save_state()
-        self.assertTrue(sqlite3.connect('./dojo.db'), msg="Can't connect to saved db")
+        self.assertTrue(sqlite3.connect('./Test.db'), msg="Can't connect to saved db")
 
     def test_load_state(self):
         self.dojo_instance = Dojo()
         self.dojo_instance.create_room("office", ["Blue", "Green", "Pink"])
         self.dojo_instance.create_room("living_space", ["A", "B", "C"])
         self.dojo_instance.load_people("inputs.txt")
+        database = self.dojo_db.create_db('Test')
+        self.dojo_instance.session = database.session
         self.dojo_instance.save_state()
 
         self.new_dojo_instance = Dojo()
+        database = self.dojo_db.read_db('Test')
+        self.new_dojo_instance.session = database.session
         self.new_dojo_instance.load_state()
 
         self.assertEqual(len(self.new_dojo_instance.all_fellows), 4,
