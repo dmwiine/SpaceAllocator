@@ -4,7 +4,6 @@ from sqlalchemy import Column, Date, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, backref
 
-#engine = create_engine('sqlite:///dojo.db')
 Base = declarative_base()
 
 
@@ -70,5 +69,3 @@ class StaffModel(Base):
         self.office_id = office_id
         self.name = name
 
-
-#Base.metadata.create_all(engine)
