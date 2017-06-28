@@ -97,6 +97,8 @@ class Dojo():
 
     def add_staff(self, name):
         """Function to add a staff and allocate him/her a room"""
+        if len(self.all_offices) == 0 and len(self.all_living_spaces) == 0:
+            raise ValueError("Ooops!!!, Rooms must be created before a person is added")
         if not self.has_invalid_chars(name):
             if not self.staff_exists(name):
                 staff = Staff(name)
@@ -194,7 +196,6 @@ class Dojo():
         """Prints room allocations to a text file"""
         if not isinstance(filename, str):
             raise ValueError("Ooops!, Please enter a valid filename")
-
         file = open('./Files/' + filename, 'w')
         for key, value in self.allocations.items():
             file.write('\n' + key + '\n')

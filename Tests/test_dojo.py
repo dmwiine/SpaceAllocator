@@ -36,6 +36,8 @@ class TestDojo(unittest.TestCase):
         self.assertEqual(new_fellow_count - initial_fellow_count, 1)
 
     def test_add_staff_successfully(self):
+        self.dojo.create_room("office", ["Blue", "Green", "Pink"])
+        self.dojo.create_room("living_space", ["A", "B", "C"])
         initial_staff_count = len(self.dojo.all_staff)
         staff = self.dojo.add_staff("Donna")
         self.assertTrue(staff)
@@ -50,6 +52,47 @@ class TestDojo(unittest.TestCase):
         self.assertRaises(ValueError, self.dojo.create_room, "", [])
         self.assertRaises(ValueError, self.dojo.create_room, "Green", [])
         self.assertRaises(ValueError, self.dojo.create_room, "", ["office"])
+    def test_create_room_takes_only_office_or_living_space(self):
+        self.assertRaises(ValueError, self.dojo.create_room, "washroom", ["Blue", "Yellow"])
+        self.assertRaises(ValueError, self.dojo.create_room, "meeting_room", ["Blue", "Yellow"])
+    def test_create_room_doesnt_create_room_if_it_exists(self):
+        self.dojo.create_room("living_space",["Red"])
+        self.assertRaises(ValueError, self.dojo.create_room, "living_space",["Red"])
+
+        self.dojo.create_room("office",["Valhala"])
+        self.assertRaises(ValueError, self.dojo.create_room, "office",["Valhala"])
+
+    def test_add_fellow_doesnt_create_person_if_no_rooms_have_been_created(self):
+        self.assertRaises(ValueError, self.dojo.add_fellow, "Donna Mwiine", "Y")
+
+    def test_add_staff_doesnt_create_person_if_no_rooms_have_been_created(self):
+        self.assertRaises(ValueError, self.dojo.add_staff, "Donna Mwiine")
+
+    def test_add_fellow_doesnt_add_a_person_who_exists(self):
+        self.dojo.create_room("office", ["Blue", "Green", "Pink"])
+        self.dojo.create_room("living_space", ["A", "B", "C"])
+        self.dojo.add_fellow("John Smith", "Y")
+        self.assertRaises(ValueError, self.dojo.add_fellow, "John Smith", "Y")
+
+    def test_add_staff_doesnt_add_a_person_who_exists(self):
+        self.dojo.create_room("office", ["Blue", "Green", "Pink"])
+        self.dojo.create_room("living_space", ["A", "B", "C"])
+        self.dojo.add_staff("John Smith")
+        self.assertRaises(ValueError, self.dojo.add_staff, "John Smith")
+
+    def test_add_staff_doesnt_add_person_with_invalid_characters(self):
+        self.dojo.create_room("office", ["Blue", "Green", "Pink"])
+        self.dojo.create_room("living_space", ["A", "B", "C"])
+        self.assertRaises(ValueError, self.dojo.add_staff, "#$%#@%@ %$^^%^&")
+        self.assertRaises(ValueError, self.dojo.add_staff, "121236 %$^^%^&")
+        self.assertRaises(ValueError, self.dojo.add_staff, "#$%#@%@ Mwiine")
+    
+    def test_add_fellow_doesnt_add_person_with_invalid_characters(self):
+        self.dojo.create_room("office", ["Blue", "Green", "Pink"])
+        self.dojo.create_room("living_space", ["A", "B", "C"])
+        self.assertRaises(ValueError, self.dojo.add_fellow, "#$%#@%@ %$^^%^&", "N")
+        self.assertRaises(ValueError, self.dojo.add_fellow, "121236 %$^^%^&", "Y")
+        self.assertRaises(ValueError, self.dojo.add_fellow, "#$%#@%@ Mwiine", "Y")
 
     def test_fellow_is_assigned_an_office_if_offices_available(self):
         self.dojo.create_room("office", ["Red"])
@@ -80,6 +123,8 @@ class TestDojo(unittest.TestCase):
                           msg="Fellow should not be assigned living space if no living space is available")
 
     def test_staff_is_not_assigned_office_if_no_office_is_available(self):
+        self.dojo.create_room("office", ["Blue", "Green", "Pink"])
+        self.dojo.create_room("living_space", ["A", "B", "C"])
         self.dojo.available_offices = []
         staff = self.dojo.add_staff("Daph")
         self.assertIsNone(staff.office, 
@@ -94,13 +139,23 @@ class TestDojo(unittest.TestCase):
                           msg="Fellow should not be assigned office if no office is available")
 
     def test_reallocate_person_successfully_reallocates_person(self):
+        
+        
         self.dojo.create_room("living_space", ["A"])
+        self.dojo.create_room("office", ["RUBY"] )
         fellow = self.dojo.add_fellow("Daph", 'Y')
         self.dojo.create_room("living_space", ["B"])
-        fellow_room = fellow.living_space.name
+        self.dojo.create_room("office", ["SHELL"] )
+        fellow_living_space = fellow.living_space.name
+        fellow_office = fellow.office.name
         self.dojo.reallocate_person("Daph", "B")
-        new_fellow_room = fellow.living_space.name
-        self.assertNotEqual(new_fellow_room, fellow_room, msg="Person was not reallocated")
+        new_fellow_living_space = fellow.living_space.name
+        self.assertNotEqual(new_fellow_living_space, fellow_living_space, msg="Person was not reallocated")
+        self.dojo.reallocate_person("Daph", "SHELL")
+        new_fellow_office = fellow.office.name
+        self.assertNotEqual(new_fellow_office, fellow_office, msg="Person was not reallocated")
+
+    
 
     def test_add_person_to_office(self):
         bruce = Fellow('Bruce')
@@ -158,7 +213,25 @@ class TestDojo(unittest.TestCase):
         unallocated_file = open("./Files/unallocatted.txt")
         self.assertTrue(unallocated_file, msg="Should create an unallocated.txt file")
         unallocated_file.close()
+    def test_print_allocations_to_file_takes_valid_file_name(self):
+        self.dojo.create_room("office", ["Blue", "Green", "Pink"])
+        self.dojo.create_room("living_space", ["A", "B", "C"])
+        self.dojo.load_people("inputs.txt")
+        self.assertRaises(ValueError, self.dojo.print_allocations_to_a_file, 877762)
+    
+    def test_print_unallocated_to_file_takes_valid_file_name(self):
+        self.dojo.create_room("office", ["Blue", "Green", "Pink"])
+        self.dojo.create_room("living_space", ["A", "B", "C"])
+        self.dojo.load_people("inputs.txt")
+        self.assertRaises(ValueError, self.dojo.print_unallocated_to_file, 567492)
 
+
+    def test_print_room_when_room_name_doesnt_exist(self):
+        self.dojo.create_room("office", ["Blue", "Green", "Pink"])
+        self.dojo.create_room("living_space", ["A", "B", "C"])
+
+        self.assertRaises(ValueError, self.dojo.print_room, "Valhala")
+        self.assertRaises(ValueError, self.dojo.print_room, "Horgwarts")
     def test_save_state(self):
         self.dojo.create_room("office", ["Blue", "Green", "Pink"])
         self.dojo.create_room("living_space", ["A", "B", "C"])
