@@ -6,13 +6,13 @@ from sqlalchemy.orm import relationship, backref
 
 Base = declarative_base()
 
-
 class FellowModel(Base):
     """"""
     __tablename__ = "fellow"
 
     fellow_id = Column(Integer, primary_key=True)
-    living_space_id = Column('living_space_id', Integer, ForeignKey("living_space.living_space_id"), nullable=True)
+    living_space_id = Column('living_space_id', Integer,
+                             ForeignKey("living_space.living_space_id"), nullable=True)
     office_id = Column('office_id', Integer, ForeignKey("office.office_id"), nullable=True)
     name = Column(String)
 
@@ -21,7 +21,6 @@ class FellowModel(Base):
         self.living_space_id = living_space_id
         self.office_id = office_id
         self.name = name
-
 
 class LivingSpaceModel(Base):
     """"""
@@ -37,7 +36,6 @@ class LivingSpaceModel(Base):
         self.name = name
         self.spaces_available = spaces_available
 
-
 class OfficeModel(Base):
     """"""
     __tablename__ = "office"
@@ -52,9 +50,6 @@ class OfficeModel(Base):
         """"""
         self.name = name
         self.spaces_available = spaces_available
-
-
-
 
 class StaffModel(Base):
     """"""
