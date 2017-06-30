@@ -6,14 +6,14 @@ from app.office import Office
 from app.living_space import LivingSpace
 from app.staff import Staff
 from app.fellow import Fellow
-#from Models.models import engine
-from sqlalchemy.orm import sessionmaker
 
 from Models.models import OfficeModel, FellowModel, StaffModel, LivingSpaceModel
 
 
 class Dojo():
-    """This is the main Dojo class that handles the creation of rooms, addition of fellows and staff."""
+    """This is the main Dojo class that handles the creation of rooms,
+        addition of fellows and staff.
+    """
     def __init__(self):
         self.all_offices = []
         self.all_living_spaces = []
@@ -25,6 +25,13 @@ class Dojo():
         self.session = None
 
     def room_exists(self, room_name):
+        """Function to check whether a room already exists in the system
+            Args:
+            room_name (str): The name of the room.
+
+            Returns:
+            True/False
+        """
         all_rooms = self.all_offices + self.all_living_spaces
         is_created = [room for room in all_rooms if room.name == room_name]
         if is_created:
@@ -33,6 +40,13 @@ class Dojo():
             return False
 
     def fellow_exists(self, person_name):
+        """Function to check whether a fellow already exists in the system
+            Args:
+            person_name (str): The name of the fellow.
+
+            Returns:
+            True/False
+        """
         is_created = [person for person in self.all_fellows if person.name == person_name]
         if is_created:
             return True
@@ -40,6 +54,14 @@ class Dojo():
             return False
 
     def staff_exists(self, person_name):
+        """Function to check whether a staffer already exists in the system
+            Args:
+            person_name (str): The name of the staffer.
+
+            Returns:
+            True/False
+        """
+
         is_created = [person for person in self.all_staff if person.name == person_name]
         if is_created:
             return True
@@ -47,7 +69,12 @@ class Dojo():
             return False
 
     def create_room(self, room_type, name_list):
-        """ This function creates new rooms which are either offices or living spaces"""
+        """ This function creates new rooms which are either offices or living spaces
+
+            Args:
+            room_type (str): Type of room.
+            name_list ([]): List of room_names.
+        """
 
         if not room_type:
             raise ValueError("Ooops, Room type cannot be empty")
@@ -72,7 +99,18 @@ class Dojo():
                 raise TypeError("Ooops!, Please enter a valid office name")
 
     def add_fellow(self, name, wants_accomodation):
-        """Function to add a fellow and allocate him/her a room"""
+        """Function to add a fellow and allocate him/her a room
+
+            Args:
+            name (str): The name of the fellow.
+            wants_accommodation : Indicates wether the fellow wants accomodation.
+            Can be N for No or Y for Yes
+
+            Returns:
+            Fellow: An object of type Fellow.
+
+        """
+
         if not self.all_offices and not self.all_living_spaces:
             raise ValueError("Ooops!!!, Rooms must be created before a person is added")
         if self.has_invalid_chars(name):
@@ -97,7 +135,13 @@ class Dojo():
         return fellow
 
     def add_staff(self, name):
-        """Function to add a staff and allocate him/her a room"""
+        """Function to add a staff and allocate him/her a room
+            Args:
+            name (str): The name of the staffer.
+
+            Returns:
+            Staff: An object of type Staff.
+        """
         if not self.all_offices and not self.all_living_spaces:
             raise ValueError("Ooops!!!, Rooms must be created before a person is added")
         if self.has_invalid_chars(name):
@@ -115,7 +159,15 @@ class Dojo():
         return staff
 
     def add_person_to_office(self, person, office):
-        """Function to add a person to a an office"""
+        """Function to add a person to a an office
+
+            Args:
+            person (obj): The person can be either a Fellow or Staff object .
+            office (obj): This is an instance of an office object
+
+            Returns:
+            Person: An object of type Fellow or Staff.
+        """
         if office.space_available > 0:
             person.office = office
             office.space_available -= 1
@@ -127,7 +179,14 @@ class Dojo():
         return person
 
     def add_fellow_to_living_space(self, person, living_space):
-        """Fuction to add a person to a living space"""
+        """Fuction to add a person to a living space
+            Args:
+            person (obj): The person can be either a Fellow or Staff object .
+            living_space (obj): This is an instance of Living_Space object
+
+            Returns:
+            Person: An object of type Fellow.
+        """
         if person is Staff:
             raise ValueError("Staff cannot be allocated a living_space")
         if living_space.space_available > 0:
@@ -141,7 +200,11 @@ class Dojo():
             return person
 
     def get_available_living_space(self):
-        """ This function randomizes the living_space selection"""
+        """ This function randomizes the living_space selection
+
+            Returns:
+            living_space: A randomly selected Living_Space object
+        """
 
         if self.available_living_spaces:
             living_space = random.choice(self.available_living_spaces)
@@ -150,7 +213,10 @@ class Dojo():
             return False
 
     def get_available_office(self):
-        """This function randomizes the office selection"""
+        """This function randomizes the office selection
+            Returns:
+            office: A randomly selected Office object
+        """
 
         if self.available_offices:
             office = random.choice(self.available_offices)
@@ -282,7 +348,7 @@ class Dojo():
 
     def remove_person_from_room(self, room_name, person):
         """ This function removes a person from their current room before
-        they can be reallocated to a new room.
+            they can be reallocated to a new room.
         """
         self.allocations[room_name].remove(person)
         old_room = self.find_room(room_name)
@@ -299,10 +365,12 @@ class Dojo():
         print()
         print("**** Available Living Spaces ****")
         for living_space in self.available_living_spaces:
-            print(living_space.name + " has " + str(living_space.space_available) + " available space(s).")
+            print(living_space.name + " has " + str(living_space.space_available)+
+                  " available space(s).")
 
     def load_people(self, file_name):
         """Function to load people from a text file"""
+        
         path = os.path.join(os.getcwd())+'/'
         file = open(file_name, 'r')
         wants_accomodation = "N"
