@@ -10,22 +10,22 @@ class TestOffice(unittest.TestCase):
                               msg='The object should be an instance of the `Office` class')
 
     def test_office_properties(self):
-        x = Office('X')
-        self.assertListEqual(['X', 6],
-                             [x.name, x.space_available],
+        office = Office('Black')
+        self.assertListEqual(['Black', 6],
+                             [office.name, office.space_available],
                              msg='The name, space_available should be X and 6')
 
     def test_has_space_if_office_has_no_space(self):
-        x = Office('X')
-        x.space_available = 0
-        self.assertEqual(False, x.has_space(), msg='The office has_space should return False')
+        office = Office('Yellow')
+        office.space_available = 0
+        self.assertEqual(False, office.has_space(), msg='The office has_space should return False')
 
     def test_has_space_if_office_has_space(self):
-        x = Office('X')
-        x.space_available = 4
-        self.assertEqual(True, x.has_space(), msg='The office has_space should return True')
+        office = Office('Red')
+        office.space_available = 4
+        self.assertEqual(True, office.has_space(), msg='The office has_space should return True')
 
     def test_default_office_available_space(self):
-        x = Office('X')
-        self.assertEqual(6, x.space_available,
+        office = Office('Blue')
+        self.assertEqual(6, office.space_available,
                          msg="The office default space_available should be 6")
