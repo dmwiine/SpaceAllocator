@@ -9,10 +9,6 @@ class TestLivingSpace(unittest.TestCase):
         yellow = LivingSpace('Yellow')
         self.assertIsInstance(yellow, LivingSpace, msg='The object should be an instance of the `LivingSpace` class')
 
-    #def test_living_space_object_type(self):
-        #yellow = LivingSpace('Yellow')
-        #self.assertTrue((type(yellow) is LivingSpace), msg='The object should be a type of `LivingSpace`')
-
     def test_living_space_properties(self):
         x = LivingSpace('X')
         self.assertListEqual(['X', 4],
