@@ -69,7 +69,7 @@ class TheDojo(cmd.Cmd):
     print()
     intro = '******************* Welcome to the Dojo Room Allocator' \
         + ' (type help for a list of commands ********************.)'
-    prompt = '(dojo_main) '
+    prompt = 'Enter Command=> '
     file = None
     print()
 
@@ -105,11 +105,14 @@ class TheDojo(cmd.Cmd):
         last_name = arg["<last_name>"].upper()
         person_name = first_name + " " + last_name
         person_type = arg["<person_type>"].upper()
-        wants_accomodation = arg["<wants_accomodation>"]
+        wants_accomodation = arg["<wants_accomodation>"].upper()
 
         try:
             if wants_accomodation is None:
                 wants_accomodation = "N"
+            if person_type == "STAFF" and wants_accomodation == "Y":
+                print()
+                print(Fore.RED +"Unfortunately a staff cannot get accomodation at the dojo")
             if person_type == "FELLOW":
                 dojo.add_fellow(person_name, wants_accomodation.upper())
             elif person_type == "STAFF":
@@ -145,12 +148,15 @@ class TheDojo(cmd.Cmd):
         """Usage: print_allocations [--o=filename.txt]"""
         try:
             print_to_text = arg['--o']
-            if print_to_text:
-                dojo.print_allocations_to_a_file(print_to_text)
-                print(Fore.GREEN + "Done saving allocations to file.")
-                print(Style.RESET_ALL)
-            else:
-                dojo.print_allocations()
+            #if print_to_text:
+            dojo.print_allocations(print_to_text)
+                #print()
+                #print(Fore.GREEN + "Done saving allocations to file.")
+                #print(Style.RESET_ALL)
+                #print()
+            #else:
+                #dojo.print_allocations()
+            print()
         except ValueError as err:
             print()
             print(Fore.RED + str(err))
@@ -162,12 +168,16 @@ class TheDojo(cmd.Cmd):
         """Usage: print_unallocated [--o=filename.txt]"""
         try:
             print_to_text = arg['--o']
-            if print_to_text:
-                dojo.print_unallocated_to_file(print_to_text)
-                print(Fore.GREEN + "Done saving the unallocated to file.")
-                print(Style.RESET_ALL)
-            else:
-                dojo.print_unallocated()
+            #if print_to_text:
+            dojo.print_unallocated(print_to_text)
+                #print()
+                #print(Fore.GREEN + "Done saving the unallocated to file.")
+                #print(Style.RESET_ALL)
+                #print()
+            #else:
+                #print()
+                #dojo.print_unallocated()
+            print()
         except ValueError as err:
             print()
             print(Fore.RED + str(err))
@@ -197,6 +207,10 @@ class TheDojo(cmd.Cmd):
     def do_load_people(self, arg):
         """Usage: load_people"""
         try:
+            input_path = "/Users/donna/Documents/Andela/SpaceAllocator/"
+            if not os.path.exists(input_path + 'inputs.txt'):
+                print(Fore.RED + "inputs.txt file does not exist")
+                return
             dojo.load_people('inputs.txt')
             print()
             print(Fore.GREEN + "************* People successfully loaded from file **************")
@@ -212,7 +226,9 @@ class TheDojo(cmd.Cmd):
     def do_print_available_rooms(self, arg):
         """Usage: print_available_rooms"""
         try:
+            print()
             dojo.print_all_available_rooms()
+            print()
         except Exception:
             print()
             print(Fore.RED + "Oops! Something went wrong")
@@ -258,9 +274,8 @@ class TheDojo(cmd.Cmd):
         """Usage: load_state <sqlite_database>"""
         try:
             database_name = arg['<sqlite_database>']
-            print(path + database_name + '.db')
             if os.path.exists(path + database_name + '.db'):
-                database = dojo_db.read_db('dojo_db')
+                database = dojo_db.read_db(database_name)
                 dojo.session = database.session
                 dojo.reset()
                 print()
