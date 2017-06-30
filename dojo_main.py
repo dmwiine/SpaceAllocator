@@ -192,7 +192,7 @@ class TheDojo(cmd.Cmd):
     def do_load_people(self, arg):
         """Usage: load_people"""
         try:
-            input_path = "/Users/donna/Documents/Andela/SpaceAllocator/"
+            input_path = os.path.join(os.getcwd()) + '/'
             if not os.path.exists(input_path + 'inputs.txt'):
                 print(Fore.RED + "inputs.txt file does not exist")
                 return
