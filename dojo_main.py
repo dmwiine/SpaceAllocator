@@ -148,14 +148,7 @@ class TheDojo(cmd.Cmd):
         """Usage: print_allocations [--o=filename.txt]"""
         try:
             print_to_text = arg['--o']
-            #if print_to_text:
             dojo.print_allocations(print_to_text)
-                #print()
-                #print(Fore.GREEN + "Done saving allocations to file.")
-                #print(Style.RESET_ALL)
-                #print()
-            #else:
-                #dojo.print_allocations()
             print()
         except ValueError as err:
             print()
@@ -168,15 +161,7 @@ class TheDojo(cmd.Cmd):
         """Usage: print_unallocated [--o=filename.txt]"""
         try:
             print_to_text = arg['--o']
-            #if print_to_text:
             dojo.print_unallocated(print_to_text)
-                #print()
-                #print(Fore.GREEN + "Done saving the unallocated to file.")
-                #print(Style.RESET_ALL)
-                #print()
-            #else:
-                #print()
-                #dojo.print_unallocated()
             print()
         except ValueError as err:
             print()
