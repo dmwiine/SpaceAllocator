@@ -13,7 +13,7 @@ from Models.models import OfficeModel, FellowModel, StaffModel, LivingSpaceModel
 
 
 class Dojo():
-    """This is the main Dojo class"""
+    """This is the main Dojo class that handles the creation of rooms, addition of fellows and staff."""
     def __init__(self):
         self.all_offices = []
         self.all_living_spaces = []
@@ -303,8 +303,7 @@ class Dojo():
 
     def load_people(self, file_name):
         """Function to load people from a text file"""
-
-        path = "/Users/donna/Documents/Andela/SpaceAllocator/"
+        path = os.path.join(os.getcwd())+'/'
         file = open(file_name, 'r')
         wants_accomodation = "N"
         if os.path.getsize(path + 'inputs.txt') == 0:
