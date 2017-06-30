@@ -8,10 +8,6 @@ class TestStaff(unittest.TestCase):
         bruce = Staff('Bruce')
         self.assertIsInstance(bruce, Staff, msg='The object should be an instance of the `Staff` class')
 
-    #def test_staff_object_type(self):
-        #bruce = Staff('Bruce')
-        #self.assertTrue((type(bruce) is Staff), msg='The object should be a type of `Staff`')
-
     def test_staff_properties(self):
         donna = Staff('Donna')
         self.assertListEqual(['Donna', None],
