@@ -7,7 +7,7 @@ class Room():
         self.space_available = 0
 
 
-    def has_space(self):
+    def __has_space(self):
         """ Method to check whether a room has available space """
         if self.space_available == 0:
             return False
