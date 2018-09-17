@@ -9,10 +9,6 @@ class TestFellow(unittest.TestCase):
         bruce = Fellow('Bruce')
         self.assertIsInstance(bruce, Fellow, msg='The object should be an instance of the `Fellow` class')
 
-    #def test_fellow_object_type(self):
-       # bruce = Fellow('Bruce')
-        #self.assertTrue((type(bruce) is Person), msg='The object should be a type of `Fellow`')
-
     def test_fellow_properties(self):
         donna = Fellow('Donna')
         self.assertListEqual(['Donna', None, None,False],

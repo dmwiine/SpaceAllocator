@@ -1,18 +1,19 @@
 
 import random
 import string
+import os
 from app.office import Office
 from app.living_space import LivingSpace
 from app.staff import Staff
 from app.fellow import Fellow
-#from Models.models import engine
-from sqlalchemy.orm import sessionmaker
 
 from Models.models import OfficeModel, FellowModel, StaffModel, LivingSpaceModel
 
 
 class Dojo():
-    """This is the main Dojo class"""
+    """This is the main Dojo class that handles the creation of rooms,
+        addition of fellows and staff.
+    """
     def __init__(self):
         self.all_offices = []
         self.all_living_spaces = []
@@ -24,98 +25,149 @@ class Dojo():
         self.session = None
 
     def room_exists(self, room_name):
+        """Function to check whether a room already exists in the system
+            Args:
+            room_name (str): The name of the room.
+
+            Returns:
+            True/False
+        """
         all_rooms = self.all_offices + self.all_living_spaces
         is_created = [room for room in all_rooms if room.name == room_name]
-        if len(is_created) > 0:
+        if is_created:
             return True
         else:
             return False
 
     def fellow_exists(self, person_name):
+        """Function to check whether a fellow already exists in the system
+            Args:
+            person_name (str): The name of the fellow.
+
+            Returns:
+            True/False
+        """
         is_created = [person for person in self.all_fellows if person.name == person_name]
-        if len(is_created) > 0:
+        if is_created:
             return True
         else:
             return False
 
     def staff_exists(self, person_name):
+        """Function to check whether a staffer already exists in the system
+            Args:
+            person_name (str): The name of the staffer.
+
+            Returns:
+            True/False
+        """
+
         is_created = [person for person in self.all_staff if person.name == person_name]
-        if len(is_created) > 0:
+        if is_created:
             return True
         else:
             return False
 
     def create_room(self, room_type, name_list):
-        """ This function creates new rooms which are either offices or living spaces"""
+        """ This function creates new rooms which are either offices or living spaces
 
-        if room_type != "" and name_list != []:
-            for name in name_list:
-                if isinstance(name, str) and name.isalpha():
-                    if not self.room_exists(name.upper()):
-                        if room_type == "office":
-                            office = Office(name.upper())
-                            self.all_offices.append(office)
-                            self.available_offices.append(office)
-                        elif room_type == "living_space":
-                            living_space = LivingSpace(name.upper())
-                            self.all_living_spaces.append(living_space)
-                            self.available_living_spaces.append(living_space)
-                        else:
-                            raise ValueError("Ooops!, Room type should be either office or Living_space")
+            Args:
+            room_type (str): Type of room.
+            name_list ([]): List of room_names.
+        """
+
+        if not room_type:
+            raise ValueError("Ooops, Room type cannot be empty")
+        if not name_list:
+            raise ValueError("Ooops, Name list cannot be empty")
+        for name in name_list:
+            if isinstance(name, str) and name.isalpha():
+                if not self.room_exists(name.upper()):
+                    if room_type == "office":
+                        office = Office(name.upper())
+                        self.all_offices.append(office)
+                        self.available_offices.append(office)
+                    elif room_type == "living_space":
+                        living_space = LivingSpace(name.upper())
+                        self.all_living_spaces.append(living_space)
+                        self.available_living_spaces.append(living_space)
                     else:
-                        raise ValueError("Ooops!, Room has already been created")
+                        raise ValueError("Oops!, Room type should be either office or Living_space")
                 else:
-                    raise TypeError("Ooops!, Please enter a valid office name")
-        else:
-            raise ValueError()
+                    raise ValueError("Ooops!, Room has already been created")
+            else:
+                raise TypeError("Ooops!, Please enter a valid office name")
 
     def add_fellow(self, name, wants_accomodation):
-        """Function to add a fellow and allocate him/her a room"""
-        if len(self.all_offices) == 0 and len(self.all_living_spaces) == 0:
+        """Function to add a fellow and allocate him/her a room
+
+            Args:
+            name (str): The name of the fellow.
+            wants_accommodation : Indicates wether the fellow wants accomodation.
+            Can be N for No or Y for Yes
+
+            Returns:
+            Fellow: An object of type Fellow.
+
+        """
+
+        if not self.all_offices and not self.all_living_spaces:
             raise ValueError("Ooops!!!, Rooms must be created before a person is added")
-        if not self.has_invalid_chars(name):
-            if not self.fellow_exists(name):
-                fellow = Fellow(name)
-                available_office = self.get_available_office()
-                if available_office:
-                    if fellow.office is None:
-                        fellow = self.add_person_to_office(fellow, available_office)
-                if wants_accomodation == 'Y':
-                    fellow.wants_accomodation = True
-                    living_space = self.get_available_living_space()
-                    if living_space:
-                        if fellow.living_space is None:
-                            fellow = self.add_fellow_to_living_space(fellow, living_space)
-                self.all_fellows.append(fellow)
-                self.update_available_offices()
-                self.update_available_living_spaces()
-                return fellow
-            else:
-                raise ValueError("Ooops!!, Person already exists in the system")
-        else:
+        if self.has_invalid_chars(name):
             raise ValueError("Ooops!!!, The person's name contains invalid characters. Try again!")
+        if self.fellow_exists(name):
+            raise ValueError("Ooops!!, Person already exists in the system")
+
+        fellow = Fellow(name)
+        available_office = self.get_available_office()
+        if available_office:
+            if fellow.office is None:
+                fellow = self.add_person_to_office(fellow, available_office)
+        if wants_accomodation == 'Y':
+            fellow.wants_accomodation = True
+            living_space = self.get_available_living_space()
+            if living_space:
+                if fellow.living_space is None:
+                    fellow = self.add_fellow_to_living_space(fellow, living_space)
+        self.all_fellows.append(fellow)
+        self.update_available_offices()
+        self.update_available_living_spaces()
+        return fellow
 
     def add_staff(self, name):
-        """Function to add a staff and allocate him/her a room"""
-        if len(self.all_offices) == 0 and len(self.all_living_spaces) == 0:
+        """Function to add a staff and allocate him/her a room
+            Args:
+            name (str): The name of the staffer.
+
+            Returns:
+            Staff: An object of type Staff.
+        """
+        if not self.all_offices and not self.all_living_spaces:
             raise ValueError("Ooops!!!, Rooms must be created before a person is added")
-        if not self.has_invalid_chars(name):
-            if not self.staff_exists(name):
-                staff = Staff(name)
-                available_office = self.get_available_office()
-                if available_office:
-                    if staff.office is None:
-                        staff = self.add_person_to_office(staff, available_office)
-                self.all_staff.append(staff)
-                self.update_available_offices()
-                return staff
-            else:
-                raise ValueError("Ooops!!, Person already exists in the system")
-        else:
+        if self.has_invalid_chars(name):
             raise ValueError("Ooops!!!, Invalid person name")
+        if self.staff_exists(name):
+            raise ValueError("Ooops!!, Person already exists in the system")
+
+        staff = Staff(name)
+        available_office = self.get_available_office()
+        if available_office:
+            if staff.office is None:
+                staff = self.add_person_to_office(staff, available_office)
+        self.all_staff.append(staff)
+        self.update_available_offices()
+        return staff
 
     def add_person_to_office(self, person, office):
-        """Function to add a person to a an office"""
+        """Function to add a person to a an office
+
+            Args:
+            person (obj): The person can be either a Fellow or Staff object .
+            office (obj): This is an instance of an office object
+
+            Returns:
+            Person: An object of type Fellow or Staff.
+        """
         if office.space_available > 0:
             person.office = office
             office.space_available -= 1
@@ -126,31 +178,47 @@ class Dojo():
                     self.allocations[office.name].append(person)
         return person
 
-    def add_fellow_to_living_space(self, fellow, living_space):
-        """Fuction to add a person to a living space"""
+    def add_fellow_to_living_space(self, person, living_space):
+        """Fuction to add a person to a living space
+            Args:
+            person (obj): The person can be either a Fellow or Staff object .
+            living_space (obj): This is an instance of Living_Space object
+
+            Returns:
+            Person: An object of type Fellow.
+        """
+        if person is Staff:
+            raise ValueError("Staff cannot be allocated a living_space")
         if living_space.space_available > 0:
-            fellow.living_space = living_space
+            person.living_space = living_space
             living_space.space_available -= 1
             if living_space.name not in self.allocations.keys():
-                self.allocations[living_space.name] = [fellow]
+                self.allocations[living_space.name] = [person]
             else:
-                if fellow not in self.allocations[living_space.name]:
-                    self.allocations[living_space.name].append(fellow)
-            return fellow
+                if person not in self.allocations[living_space.name]:
+                    self.allocations[living_space.name].append(person)
+            return person
 
     def get_available_living_space(self):
-        """ This function randomizes the living_space selection"""
+        """ This function randomizes the living_space selection
 
-        if len(self.available_living_spaces) != 0:
+            Returns:
+            living_space: A randomly selected Living_Space object
+        """
+
+        if self.available_living_spaces:
             living_space = random.choice(self.available_living_spaces)
             return living_space
         else:
             return False
 
     def get_available_office(self):
-        """This function randomizes the office selection"""
+        """This function randomizes the office selection
+            Returns:
+            office: A randomly selected Office object
+        """
 
-        if len(self.available_offices) != 0:
+        if self.available_offices:
             office = random.choice(self.available_offices)
             return office
         else:
@@ -184,60 +252,60 @@ class Dojo():
         else:
             print("No people have been allocated to this room")
 
-    def print_allocations(self):
-        """Print rooms and their corresponding allocations"""
-        for key, value in self.allocations.items():
-            print()
-            print(key)
-            print("-----------------------------------------------------")
-            print(",".join(occupant.name for occupant in value).upper())
-
-    def print_allocations_to_a_file(self, filename):
+    def print_allocations(self, filename=None):
         """Prints room allocations to a text file"""
-        if not isinstance(filename, str):
-            raise ValueError("Ooops!, Please enter a valid filename")
-        file = open('./Files/' + filename, 'w')
-        for key, value in self.allocations.items():
-            file.write('\n' + key + '\n')
-            file.write("-----------------------------------------------------"'\n')
-            file.write(",".join(occupant.name for occupant in value).upper() + '\n')
+        if filename:
+            if not isinstance(filename, str):
+                raise ValueError("Ooops!, Please enter a valid filename")
+            file = open('./Files/' + filename, 'w')
+            for key, value in self.allocations.items():
+                file.write('\n' + key + '\n')
+                file.write("-----------------------------------------------------"'\n')
+                file.write(",".join(occupant.name for occupant in value).upper() + '\n')
+            print()
+            print("Done saving allocations to file.")
+        else:
+            for key, value in self.allocations.items():
+                print()
+                print(key)
+                print("-----------------------------------------------------")
+                print(",".join(occupant.name for occupant in value).upper())
 
-    def print_unallocated(self):
-        """Prints all the people who haven't been allocated rooms"""
-
-        print("**** UnAllocated Fellows ****")
-        count = 0
-        for fellow in self.all_fellows:
-            if fellow.living_space is None or fellow.office is None:
-                print(fellow.name)
-                count += 1
-        if count == 0:
-            print("None found")
-
-        print()
-        print("**** UnAllocated Staff ****")
-        counter = 0
-        for staff in self.all_staff:
-            if staff.office is None:
-                print(staff.name)
-                counter += 1
-        if counter == 0:
-            print("None found")
-
-    def print_unallocated_to_file(self, filename):
+    def print_unallocated(self, filename=None):
         """Prints all the people who haven't been allocated rooms to a text file"""
-        if not isinstance(filename, str):
-            raise ValueError("Ooops!, Please enter a valid filename")
-        file = file = open('./Files/' + filename, 'w')
-        file.write('\n'"**** UnAllocated Fellows ****"'\n')
-        for fellow in self.all_fellows:
-            if fellow.living_space is None or fellow.office is None:
-                file.write(fellow.name + '\n')
-        file.write('\n')
-        file.write('\n'"**** UnAllocated Staff ****"'\n')
-        for staff in self.all_staff:
-            if staff.office is None:
-                file.write(staff.name + '\n')
+
+        if filename:
+            if not isinstance(filename, str):
+                raise ValueError("Ooops!, Please enter a valid filename")
+            file = file = open('./Files/' + filename, 'w')
+            file.write('\n'"**** UnAllocated Fellows ****"'\n')
+            for fellow in self.all_fellows:
+                if fellow.living_space is None or fellow.office is None:
+                    file.write(fellow.name + '\n')
+            file.write('\n')
+            file.write('\n'"**** UnAllocated Staff ****"'\n')
+            for staff in self.all_staff:
+                if staff.office is None:
+                    file.write(staff.name + '\n')
+        else:
+            print("**** UnAllocated Fellows ****")
+            count = 0
+            for fellow in self.all_fellows:
+                if fellow.living_space is None or fellow.office is None:
+                    print(fellow.name)
+                    count += 1
+            if count == 0:
+                print("None found")
+
+            print()
+            print("**** UnAllocated Staff ****")
+            counter = 0
+            for staff in self.all_staff:
+                if staff.office is None:
+                    print(staff.name)
+                    counter += 1
+            if counter == 0:
+                print("None found")
 
 
     def find_person(self, person_name):
@@ -261,8 +329,13 @@ class Dojo():
 
         person = self.find_person(person_name)
         room = self.find_room(room_name)
-
+        if person is None:
+            raise ValueError("Ooops, the person could not be found in the system")
+        if room is None:
+            raise ValueError("Ooops, the room could not be found in the system")
         if isinstance(room, LivingSpace) and room in self.available_living_spaces:
+            if isinstance(person, Staff):
+                raise ValueError("Staff cannot be reallocated to a living_space")
             old_living_space = person.living_space
             self.remove_person_from_room(old_living_space.name, person)
             self.add_fellow_to_living_space(person, room)
@@ -275,7 +348,7 @@ class Dojo():
 
     def remove_person_from_room(self, room_name, person):
         """ This function removes a person from their current room before
-        they can be reallocated to a new room.
+            they can be reallocated to a new room.
         """
         self.allocations[room_name].remove(person)
         old_room = self.find_room(room_name)
@@ -292,21 +365,25 @@ class Dojo():
         print()
         print("**** Available Living Spaces ****")
         for living_space in self.available_living_spaces:
-            print(living_space.name + " has " + str(living_space.space_available) + " available space(s).")
+            print(living_space.name + " has " + str(living_space.space_available)+
+                  " available space(s).")
 
     def load_people(self, file_name):
         """Function to load people from a text file"""
-
+        
+        path = os.path.join(os.getcwd())+'/'
         file = open(file_name, 'r')
         wants_accomodation = "N"
+        if os.path.getsize(path + 'inputs.txt') == 0:
+            raise ValueError("Input file is empty")
 
         for line in file.readlines():
             inputs = line.split()
-            name = inputs[0] + " " + inputs[1]
-            person_type = inputs[2]
+            name = (inputs[0] + " " + inputs[1]).upper()
+            person_type = inputs[2].upper()
 
             if len(inputs) == 4:
-                wants_accomodation = inputs[3]
+                wants_accomodation = inputs[3].upper()
             if person_type == "FELLOW":
                 self.add_fellow(name, wants_accomodation)
             elif person_type == "STAFF":
@@ -423,8 +500,10 @@ class Dojo():
                     if new_staff not in self.allocations[office.name]:
                         self.allocations[office.name].append(new_staff)
             self.all_staff.append(new_staff)
-    
+
     def reset(self):
+        """Function to do a complete system reset"""
+
         print()
         print("Resetting system, please wait....")
         self.all_offices = []
@@ -439,7 +518,8 @@ class Dojo():
 
     @staticmethod
     def has_invalid_chars(my_string):
-        # Populate a list of invalid special characters
+        """ Function to check if a string contains any invalid characters"""
+
         integers = set(['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'])
         _chars = set(string.punctuation.replace("_", ""))
         invalid_chars = _chars | integers
